@@ -164,12 +164,6 @@ struct PatchProjectsView: View {
                             Label(language.text("patch.new"), systemImage: "doc.badge.plus")
                         }
                         Button {
-                            showImporter = true
-                        } label: {
-                            Label(language.text("patch.import"), systemImage: "square.and.arrow.down")
-                        }
-                        Button {
-                            showWallpaperImporter = true
                         } label: {
                             Label(
                                 language.text("wallpaper.import"),
