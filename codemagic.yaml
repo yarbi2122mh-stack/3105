@@ -1,0 +1,21 @@
+workflows:
+  ios-unsigned-build:
+    name: Build Unsigned IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: latest
+      vars:
+        XCODE_PROJECT: "ThreeOneOSFive.xcodeproj"
+        XCODE_SCHEME: "ThreeOneOSFive"
+    scripts:
+      - name: Build App
+        script: |
+          xcodebuild -project "$XCODE_PROJECT" -scheme "$XCODE_SCHEME" -sdk iphoneos -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -derivedDataPath ./build
+      - name: Create Unsigned IPA
+        script: |
+          mkdir Payload
+          cp -r ./build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r ThreeOneOSFive.ipa Payload
+    artifacts:
+      - ThreeOneOSFive.ipa
