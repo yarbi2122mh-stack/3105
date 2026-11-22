@@ -7,36 +7,92 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
-    
+    runs-on: macos-latest
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Select Xcode
-      run: sudo xcode-select -s /Applications/Xcode.app
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
 
-    - name: Build IPA
+    - name: Generate embedded localizations (if present)
       run: |
-        xcodebuild -project ThreeOneOSFive.xcodeproj \
+        set -e
+        if [ -f generate_embedded_localizations.py ]; then
+          python3 generate_embedded_localizations.py
+          python3 generate_embedded_localizations.py --check
+        else
+          echo "No localization generator; skipping."
+        fi
+
+    - name: Build unsigned app
+      run: |
+        set -e
+        xcodebuild \
+          -project ThreeOneOSFive.xcodeproj \
           -scheme 3105 \
           -configuration Release \
           -sdk iphoneos \
-          -destination 'generic/platform=iOS' \
+          SYMROOT="$PWD/build" \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGN_IDENTITY="" \
           DEVELOPMENT_TEAM="" \
           build
 
-    - name: Create IPA
+    - name: Apply VESPER-style IPA structure
       run: |
-        mkdir -p Payload
-        cp -r build/Release-iphoneos/3105.app Payload/
-        zip -r 3105-unsigned.ipa Payload
+        set -euo pipefail
+        APP="$PWD/build/Release-iphoneos/3105.app"
+        EXEC="$APP/3105"
+        test -d "$APP"
+        test -f "$EXEC"
+
+        # 1. Remove compiled .lproj folders (localizations embedded in executable).
+        if find "$APP" -type d -name '*.lproj' -print -quit | grep -q .; then
+          find "$APP" -type d -name '*.lproj' -prune -exec rm -rf {} +
+        fi
+        if find "$APP" -type d -name '*.lproj' -print -quit | grep -q .; then
+          echo "Error: an .lproj folder remains inside the app bundle." >&2
+          exit 1
+        fi
+
+        # 2. Pad executable to 400 MiB threshold.
+        printf 'Adding 400 MiB executable padding...\n'
+        dd if=/dev/zero bs=1m count=400 >> "$EXEC" 2>/dev/null
+        EXEC_BYTES="$(wc -c < "$EXEC" | tr -d ' ')"
+        if [ "$EXEC_BYTES" -lt $((400 * 1024 * 1024)) ]; then
+          echo "Error: executable is smaller than 400 MiB: $EXEC_BYTES" >&2
+          exit 1
+        fi
+        echo "Executable size: $EXEC_BYTES bytes"
+
+        # 3. Inject BundledFiles (.3105) if present.
+        if [ -d "$PWD/BundledFiles" ]; then
+          find "$PWD/BundledFiles" -type f ! -name '.gitkeep' -print0 | \
+            while IFS= read -r -d '' file; do
+              name="$(basename "$file")"
+              cp "$file" "$APP/$name"
+              echo "Bundled file: $name"
+            done
+        fi
+
+    - name: Package unsigned IPA
+      run: |
+        set -euo pipefail
+        APP="$PWD/build/Release-iphoneos/3105.app"
+        rm -rf "$PWD/build/Payload"
+        mkdir -p "$PWD/build/Payload"
+        cp -R "$APP" "$PWD/build/Payload/"
+        cd "$PWD/build"
+        zip -9qry "3105-unsigned.ipa" Payload
+        ls -lh "3105-unsigned.ipa"
 
     - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
         name: 3105-unsigned-ipa
-        path: 3105-unsigned.ipa
+        path: build/3105-unsigned.ipa
