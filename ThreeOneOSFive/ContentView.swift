@@ -47,7 +47,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if videoMode {
-                VideoSplashView { videoMode = false }
+                VideoSplashView()
             } else {
                 Group {
                     if horizontalSizeClass == .regular {
@@ -254,11 +254,11 @@ private extension AppSection {
 
 
 struct VideoSplashView: View {
-    var onEnterApp: () -> Void = {}
     @Environment(\.scenePhase) private var scenePhase
     @State private var showCards = true
     @State private var showCategories = false
     @State private var playingSlot: String?
+    @State private var selectedGame = "ffmax"
     @State private var player: AVPlayer? = {
         guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
         let p = AVPlayer(url: url)
@@ -294,12 +294,13 @@ struct VideoSplashView: View {
 
             if let slot = playingSlot {
                 RemoteVideoView(
-                    url: URL(string: "https://raw.githubusercontent.com/yarbi2122mh-stack/3105/main/assets/" + slot + ".mp4")!,
+                    url: URL(string: "https://raw.githubusercontent.com/yarbi2122mh-stack/3105/main/assets/" + selectedGame + "/" + slot + ".mp4")!,
                     onBack: { playingSlot = nil }
                 )
                 .ignoresSafeArea()
             } else if showCards {
-                GameLaunchCards {
+                GameLaunchCards { game in
+                    selectedGame = game
                     showCards = false
                     showCategories = true
                 }
@@ -377,12 +378,12 @@ final class PlayerUIView: UIView {
 }
 
 struct GameLaunchCards: View {
-    let onEnter: () -> Void
+    let onSelect: (String) -> Void
 
     var body: some View {
         VStack(spacing: 12) {
-            GameCard(title: "FREE FIRE MAX", onTap: onEnter)
-            GameCard(title: "FREE FIRE NORMAL", onTap: onEnter)
+            GameCard(title: "FF MAX") { onSelect("ffmax") }
+            GameCard(title: "FF TH") { onSelect("ffth") }
         }
     }
 }
