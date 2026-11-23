@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var tabNavigation: AppTabNavigationState
     @State private var showSettings = false
     @State private var showLogs = false
+    @State private var videoMode = true
 
     init() {
 #if targetEnvironment(simulator)
@@ -44,7 +45,37 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VideoSplashView()
+        Group {
+            if videoMode {
+                VideoSplashView { videoMode = false }
+            } else {
+                Group {
+                    if horizontalSizeClass == .regular {
+                        regularLayout
+                    } else {
+                        compactLayout
+                    }
+                }
+                .tint(AppTheme.accent)
+                .imageScale(.small)
+                .onChange(of: patchDraftCoordinator.request?.id) { requestID in
+                    if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
+                }
+                .onChange(of: patchDraftCoordinator.importRequest?.id) { requestID in
+                    if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
+                }
+                .onChange(of: developerModeEnabled) { _ in
+                    tabNavigation.reconcileSelection(with: featureVisibility)
+                }
+                .onAppear {
+                    tabNavigation.reconcileSelection(with: featureVisibility)
+                }
+                .sheet(isPresented: $showSettings) { SettingsView() }
+                .sheet(isPresented: $showLogs) { LogView() }
+                .patchStorePresentation(patchStore)
+                .repositoryStorePresentation(repositoryStore, patchStore: patchStore)
+            }
+        }
     }
 
     private var compactLayout: some View {
@@ -223,6 +254,7 @@ private extension AppSection {
 
 
 struct VideoSplashView: View {
+    var onEnter: () -> Void = {}
     @Environment(\.scenePhase) private var scenePhase
     @State private var player: AVPlayer? = {
         guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
@@ -256,12 +288,8 @@ struct VideoSplashView: View {
                         player.play()
                     }
             }
-            VStack {
-                Spacer()
-                GameLaunchCards()
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 48)
-            }
+            GameLaunchCards(onEnter: onEnter)
+                .padding(.horizontal, 24)
         }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
@@ -302,34 +330,33 @@ final class PlayerUIView: UIView {
 
 
 struct GameLaunchCards: View {
+    let onEnter: () -> Void
+
     var body: some View {
         HStack(spacing: 16) {
-            GameCard(title: "FREE FIRE MAX", scheme: "com.dts.freefiremax://")
-            GameCard(title: "FREE FIRE NORMAL", scheme: "com.dts.freefire://")
+            GameCard(title: "FREE FIRE MAX", onTap: onEnter)
+            GameCard(title: "FREE FIRE NORMAL", onTap: onEnter)
         }
     }
 }
 
 struct GameCard: View {
     let title: String
-    let scheme: String
+    let onTap: () -> Void
 
     var body: some View {
-        Button {
-            guard let url = URL(string: scheme) else { return }
-            UIApplication.shared.open(url, options: [:]) { _ in }
-        } label: {
+        Button(action: onTap) {
             Text(title)
                 .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 74)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                .background(Color.clear, in: RoundedRectangle(cornerRadius: 18))
                 .overlay(
                     RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.green.opacity(0.7), lineWidth: 1.5)
+                        .stroke(Color.green.opacity(0.55), lineWidth: 1.2)
                 )
-                .shadow(color: .green.opacity(0.18), radius: 10, y: 4)
+                .shadow(color: .green.opacity(0.12), radius: 8, y: 3)
         }
         .buttonStyle(.plain)
     }
