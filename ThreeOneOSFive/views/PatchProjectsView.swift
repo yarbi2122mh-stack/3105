@@ -114,9 +114,6 @@ struct PatchProjectsView: View {
                                 ForEach(filteredItems) { item in
                                     itemRow(item)
                                 }
-                                .onDelete { offsets in
-                                    offsets.map { filteredItems[$0] }.forEach(store.delete)
-                                }
                             }
                         }
                         if !filteredWallpaperPackages.isEmpty {
@@ -129,19 +126,6 @@ struct PatchProjectsView: View {
                                         )
                                     } label: {
                                         wallpaperRow(package)
-                                    }
-                                    .swipeActions(
-                                        edge: .trailing,
-                                        allowsFullSwipe: false
-                                    ) {
-                                        Button(role: .destructive) {
-                                            wallpaperPendingDeletion = package
-                                        } label: {
-                                            Label(
-                                                language.text("common.delete"),
-                                                systemImage: "trash"
-                                            )
-                                        }
                                     }
                                 }
                             }
