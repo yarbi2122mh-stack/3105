@@ -382,8 +382,8 @@ struct GameLaunchCards: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            GameCard(title: "FF MAX") { onSelect("ffmax") }
-            GameCard(title: "FF TH") { onSelect("ffth") }
+            GameCard(title: "FREE FIRE MAX") { onSelect("ffmax") }
+            GameCard(title: "FREE FIRE NORMAL") { onSelect("ffth") }
         }
     }
 }
