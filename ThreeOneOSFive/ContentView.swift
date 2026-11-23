@@ -258,6 +258,7 @@ struct VideoSplashView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showCards = true
     @State private var showCategories = false
+    @State private var playingSlot: String?
     @State private var player: AVPlayer? = {
         guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
         let p = AVPlayer(url: url)
@@ -291,7 +292,13 @@ struct VideoSplashView: View {
                     }
             }
 
-            if showCards {
+            if let slot = playingSlot {
+                RemoteVideoView(
+                    url: URL(string: "https://raw.githubusercontent.com/yarbi2122mh-stack/3105/main/assets/" + slot + ".mp4")!,
+                    onBack: { playingSlot = nil }
+                )
+                .ignoresSafeArea()
+            } else if showCards {
                 GameLaunchCards {
                     showCards = false
                     showCategories = true
@@ -299,9 +306,9 @@ struct VideoSplashView: View {
                 .padding(.horizontal, 24)
             } else if showCategories {
                 VStack(spacing: 12) {
-                    GameCard(title: "AIM", onTap: onEnterApp)
-                    GameCard(title: "HOLOGRAM", onTap: onEnterApp)
-                    GameCard(title: "SKIN", onTap: onEnterApp)
+                    GameCard(title: "AIM") { playingSlot = "aim" }
+                    GameCard(title: "HOLOGRAM") { playingSlot = "hologram" }
+                    GameCard(title: "SKIN") { playingSlot = "skin" }
                 }
                 .padding(.horizontal, 24)
             }
@@ -394,5 +401,57 @@ struct GameCard: View {
                 .overlay(Capsule().stroke(Color.white.opacity(0.45), lineWidth: 1))
         }
         .buttonStyle(.plain)
+    }
+}
+
+
+struct RemoteVideoView: View {
+    let url: URL
+    let onBack: () -> Void
+    @State private var player: AVPlayer?
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if let player {
+                VideoPlayerContainer(player: player)
+                    .ignoresSafeArea()
+            }
+            VStack {
+                HStack {
+                    Button(action: onBack) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.08), in: Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.45), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 56)
+                Spacer()
+            }
+        }
+        .onAppear {
+            let p = AVPlayer(url: url)
+            p.allowsExternalPlayback = false
+            player = p
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: p.currentItem,
+                queue: .main
+            ) { _ in
+                p.seek(to: .zero)
+                p.play()
+            }
+            p.play()
+        }
     }
 }
