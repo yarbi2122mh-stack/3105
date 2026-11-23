@@ -82,6 +82,7 @@ struct ContentView: View {
                     .tag(section.rawValue)
             }
         }
+        .toolbar(.hidden, for: .tabBar)
     }
 
     private var regularLayout: some View {
