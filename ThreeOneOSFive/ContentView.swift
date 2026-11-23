@@ -47,10 +47,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if videoMode {
-                VideoSplashView { section in
-                    tabNavigation.select(section.rawValue)
-                    videoMode = false
-                }
+                VideoSplashView { videoMode = false }
             } else {
                 Group {
                     if horizontalSizeClass == .regular {
@@ -257,7 +254,7 @@ private extension AppSection {
 
 
 struct VideoSplashView: View {
-    var onCategory: (AppSection) -> Void = { _ in }
+    var onEnterApp: () -> Void = {}
     @Environment(\.scenePhase) private var scenePhase
     @State private var showCards = true
     @State private var showCategories = false
@@ -302,9 +299,9 @@ struct VideoSplashView: View {
                 .padding(.horizontal, 24)
             } else if showCategories {
                 VStack(spacing: 12) {
-                    GameCard(title: "AIM") { onCategory(.aim) }
-                    GameCard(title: "HOLOGRAM") { onCategory(.hologram) }
-                    GameCard(title: "SKIN") { onCategory(.skin) }
+                    GameCard(title: "AIM") onEnterApp
+                    GameCard(title: "HOLOGRAM") onEnterApp
+                    GameCard(title: "SKIN") onEnterApp
                 }
                 .padding(.horizontal, 24)
             }
