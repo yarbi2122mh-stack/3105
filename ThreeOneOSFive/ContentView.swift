@@ -1,3 +1,4 @@
+import AVFoundation
 import AVKit
 import SwiftUI
 import UIKit
@@ -234,7 +235,7 @@ struct VideoSplashView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let player {
-                VideoPlayer(player: player)
+                VideoPlayerContainer(player: player)
                     .ignoresSafeArea()
                     .onAppear {
                         NotificationCenter.default.addObserver(
@@ -260,5 +261,35 @@ struct VideoSplashView: View {
             guard phase == .active else { return }
             player?.play()
         }
+    }
+}
+
+
+struct VideoPlayerContainer: UIViewRepresentable {
+    let player: AVPlayer
+
+    func makeUIView(context: Context) -> PlayerUIView {
+        PlayerUIView(player: player)
+    }
+
+    func updateUIView(_ uiView: PlayerUIView, context: Context) {}
+}
+
+final class PlayerUIView: UIView {
+    private let playerLayer: AVPlayerLayer
+
+    init(player: AVPlayer) {
+        self.playerLayer = AVPlayerLayer(player: player)
+        self.playerLayer.videoGravity = .resizeAspectFill
+        super.init(frame: .zero)
+        backgroundColor = .black
+        layer.addSublayer(playerLayer)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        playerLayer.frame = bounds
     }
 }
