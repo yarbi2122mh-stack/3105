@@ -142,34 +142,7 @@ struct PatchProjectsView: View {
                 }
                 .listStyle(.insetGrouped)
             }
-            .navigationTitle(language.text("tab.installed"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button {
-                        } label: {
-                            Label(
-                                language.text("wallpaper.import"),
-                                systemImage: "photo.badge.plus"
-                            )
-                        }
-                    } label: {
-                        if store.isBusy || isImportingWallpapers {
-                            ProgressView()
-                        } else {
-                            Image(systemName: "plus")
-                        }
-                    }
-                    .disabled(store.isBusy || isImportingWallpapers)
-                    .accessibilityLabel(language.text("patch.add"))
-                }
-                AppUtilityToolbar(
-                    language: language,
-                    onOpenSettings: onOpenSettings,
-                    onOpenLogs: onOpenLogs
-                )
-            }
             .sheet(isPresented: $showImporter) {
                 FileDocumentPicker(
                     allowedContentTypes: PatchPackagePickerPolicy.allowedContentTypes,
@@ -474,15 +447,11 @@ private struct PatchProjectRow: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                InstalledContentKindBadge(kind: .patch, language: language)
                 if let author = item.project?.author, !author.isEmpty {
                     Text(language.text("patch.by_author", author))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text(rowDetail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
             Spacer()
             if item.summary.isPasswordProtected {
