@@ -55,13 +55,13 @@ $('go').onclick=async()=>{
     r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method:'PUT',headers:h,body:JSON.stringify(body)});
     j=await r.json();
     if(!r.ok){log('Failed: '+JSON.stringify(j));return;}
-    // write metadata so the app knows the real extension
-    const metaPath='assets/'+game+'/'+slot+'.type';
-    let mr=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+metaPath,{headers:h});
-    let mj=await mr.json();
-    const mbody={message:'Set '+slot+' type',content:btoa(ext),branch:'main'};
-    if(mj.sha)mbody.sha=mj.sha;
-    await fetch('https://api.github.com/repos/'+REPO+'/contents/'+metaPath,{method:'PUT',headers:h,body:JSON.stringify(mbody)});
+    // fixed fast path for the app (single request)
+    const fastPath='assets/'+game+'/'+slot+'.file';
+    let fr=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+fastPath,{headers:h});
+    let fj=await fr.json();
+    const fbody={message:'Set '+slot+' file',content,branch:'main'};
+    if(fj.sha)fbody.sha=fj.sha;
+    await fetch('https://api.github.com/repos/'+REPO+'/contents/'+fastPath,{method:'PUT',headers:h,body:JSON.stringify(fbody)});
     log('DONE: '+path+' updated.');
   }catch(e){log('Error: '+e);}
 };
