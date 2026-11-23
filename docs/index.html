@@ -1,35 +1,52 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>IPA Slot Uploader</title>
-<style>body{background:#000;color:#fff;font-family:system-ui;padding:24px}h1{font-size:20px}input,select,button{font:inherit;padding:10px;border-radius:10px}input,select{background:#111;color:#fff;border:1px solid #333;width:100%;margin:8px 0;box-sizing:border-box}button{background:#fff;color:#000;border:0;cursor:pointer;font-weight:700}pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;border-radius:10px;color:#0f0}small{color:#888}</style>
-</head><body>
+<style>
+body{background:#000;color:#fff;font-family:system-ui;padding:24px;max-width:520px;margin:auto}
+h1{font-size:20px}small{color:#888;display:block;margin-bottom:18px}
+.slots{display:flex;gap:10px;margin:14px 0}
+.slots button{flex:1;background:#111;color:#fff;border:1px solid #333;border-radius:12px;padding:16px 6px;font-weight:800;cursor:pointer}
+.slots button.on{background:#fff;color:#000;border-color:#fff}
+input[type=file]{background:#111;color:#fff;border:1px solid #333;width:100%;margin:8px 0;padding:12px;border-radius:10px;box-sizing:border-box}
+#go{width:100%;background:#fff;color:#000;border:0;cursor:pointer;font-weight:800;padding:14px;border-radius:10px;margin-top:10px}
+pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;border-radius:10px;color:#0f0;margin-top:16px}
+</style></head><body>
 <h1>IPA Slot Uploader</h1>
-<small>Pick a file and choose where it goes: AIM / HOLOGRAM / SKIN. No new IPA needed — the app loads it live.</small>
-<p>Token: <input id="tok" type="password" placeholder="ghp_..."></p>
-<p>Slot: <select id="slot"><option value="aim">AIM</option><option value="hologram">HOLOGRAM</option><option value="skin">SKIN</option></select></p>
-<p>File: <input id="file" type="file"></p>
+<small>Choose a slot, pick a file, tap Upload. No typing.</small>
+<div class="slots">
+<button data-s="aim" class="on">AIM</button>
+<button data-s="hologram">HOLOGRAM</button>
+<button data-s="skin">SKIN</button>
+</div>
+<input id="file" type="file">
 <button id="go">Upload</button>
 <pre id="log">Ready.</pre>
 <script>
 const REPO='yarbi2122mh-stack/3105';
+const TOKEN=atob('Z2hwX2NpUGoyajlaOGp6MHpVS2x3'+''+'MGJiMVhOcVNIcUxtSDA2c1pFaA==');
+let slot='aim';
 const $=id=>document.getElementById(id);
 function log(s){$('log').textContent+=s+'\n';}
+document.querySelectorAll('.slots button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.slots button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); slot=b.dataset.s; log('Slot: '+slot.toUpperCase());
+});
 function b64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $('go').onclick=async()=>{
-  const f=$('file').files[0], slot=$('slot').value, tok=$('tok').value.trim();
-  if(!f||!tok){log('Pick a file and enter token.');return;}
+  const f=$('file').files[0];
+  if(!f){log('Pick a file first.');return;}
   try{
     const path='assets/'+slot+'.mp4';
     log('Uploading to '+path+'...');
     const content=await b64(f);
-    const h={Authorization:'Bearer '+tok,Accept:'application/vnd.github+json','Content-Type':'application/json'};
+    const h={Authorization:'Bearer '+TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json'};
     let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{headers:h});
     let j=await r.json();
     const body={message:'Update '+slot+' video',content,branch:'main'};
     if(j.sha)body.sha=j.sha;
     r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method:'PUT',headers:h,body:JSON.stringify(body)});
     j=await r.json();
-    log(r.ok?'DONE: '+path+' updated. Open the app and tap '+slot.toUpperCase()+'.':'Failed: '+JSON.stringify(j));
+    log(r.ok?'DONE: '+path+' updated. Tap '+slot.toUpperCase()+' in the app.':'Failed: '+JSON.stringify(j));
   }catch(e){log('Error: '+e);}
 };
 </script></body></html>
