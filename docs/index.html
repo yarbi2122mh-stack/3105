@@ -1,77 +1,35 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IPA Customizer</title>
-<style>
-body{background:#000;color:#fff;font-family:system-ui;margin:0;padding:24px}
-h1{font-size:20px}
-input,button{font:inherit;padding:10px;border-radius:10px}
-input{background:#111;color:#fff;border:1px solid #333;width:100%;margin:8px 0;box-sizing:border-box}
-button{background:#fff;color:#000;border:0;cursor:pointer;font-weight:700}
-pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;border-radius:10px;color:#0f0}
-small{color:#888}
-</style>
-</head>
-<body>
-<h1>IPA Customizer — upload a file into the IPA</h1>
-<small>The file you pick becomes the video shown behind the AIM / HOLOGRAM / SKIN screen.</small>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IPA Slot Uploader</title>
+<style>body{background:#000;color:#fff;font-family:system-ui;padding:24px}h1{font-size:20px}input,select,button{font:inherit;padding:10px;border-radius:10px}input,select{background:#111;color:#fff;border:1px solid #333;width:100%;margin:8px 0;box-sizing:border-box}button{background:#fff;color:#000;border:0;cursor:pointer;font-weight:700}pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;border-radius:10px;color:#0f0}small{color:#888}</style>
+</head><body>
+<h1>IPA Slot Uploader</h1>
+<small>Pick a file and choose where it goes: AIM / HOLOGRAM / SKIN. No new IPA needed — the app loads it live.</small>
 <p>Token: <input id="tok" type="password" placeholder="ghp_..."></p>
+<p>Slot: <select id="slot"><option value="aim">AIM</option><option value="hologram">HOLOGRAM</option><option value="skin">SKIN</option></select></p>
 <p>File: <input id="file" type="file"></p>
-<button id="go">Upload &amp; Build IPA</button>
+<button id="go">Upload</button>
 <pre id="log">Ready.</pre>
 <script>
 const REPO='yarbi2122mh-stack/3105';
-const PATH='intro.mp4';
 const $=id=>document.getElementById(id);
 function log(s){$('log').textContent+=s+'\n';}
-function b64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
-async function api(url,opt){const t=$('tok').value.trim();return fetch(url,{...opt,headers:{Authorization:'Bearer '+t,Accept:'application/vnd.github+json','Content-Type':'application/json',...(opt&&opt.headers||{})}});}
+function b64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $('go').onclick=async()=>{
-  const file=$('file').files[0];
-  if(!file){log('Pick a file first.');return;}
-  if(!$('tok').value.trim()){log('Enter your GitHub token.');return;}
+  const f=$('file').files[0], slot=$('slot').value, tok=$('tok').value.trim();
+  if(!f||!tok){log('Pick a file and enter token.');return;}
   try{
-    log('Reading file...');
-    const content=await b64(file);
-    log('Uploading to repo...');
-    let r=await api('https://api.github.com/repos/'+REPO+'/contents/'+PATH);
+    const path='assets/'+slot+'.mp4';
+    log('Uploading to '+path+'...');
+    const content=await b64(f);
+    const h={Authorization:'Bearer '+tok,Accept:'application/vnd.github+json','Content-Type':'application/json'};
+    let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{headers:h});
     let j=await r.json();
-    const body={message:'Replace intro video (custom upload)',content,branch:'main'};
+    const body={message:'Update '+slot+' video',content,branch:'main'};
     if(j.sha)body.sha=j.sha;
-    r=await api('https://api.github.com/repos/'+REPO+'/contents/'+PATH,{method:'PUT',body:JSON.stringify(body)});
+    r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method:'PUT',headers:h,body:JSON.stringify(body)});
     j=await r.json();
-    if(!r.ok){log('Upload failed: '+JSON.stringify(j));return;}
-    log('Triggering build...');
-    r=await api('https://api.github.com/repos/'+REPO+'/actions/workflows/build.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
-    if(r.status!==204){log('Dispatch failed: '+r.status);return;}
-    log('Build started. Waiting...');
-    let runId=null;
-    for(let i=0;i<30;i++){
-      await new Promise(r=>setTimeout(r,3000));
-      const rr=await api('https://api.github.com/repos/'+REPO+'/actions/workflows/build.yml/runs?per_page=1');
-      const rb=await rr.json();
-      if(rb.workflow_runs&&rb.workflow_runs[0]){runId=rb.workflow_runs[0].id;break;}
-    }
-    if(!runId){log('No run found; check Actions.');return;}
-    log('Run: '+runId);
-    for(let i=0;i<80;i++){
-      await new Promise(r=>setTimeout(r,5000));
-      const rr=await api('https://api.github.com/repos/'+REPO+'/actions/runs/'+runId);
-      const rb=await rr.json();
-      if(rb.status==='completed'){
-        if(rb.conclusion!=='success'){log('Build failed: '+rb.conclusion);return;}
-        const rel=await api('https://api.github.com/repos/'+REPO+'/releases?per_page=1');
-        const relb=await rel.json();
-        const asset=relb[0].assets.find(a=>a.name.endsWith('.ipa'));
-        log('DONE! Download: '+(asset?asset.browser_download_url:'check releases'));
-        return;
-      }
-    }
-    log('Still building: https://github.com/'+REPO+'/actions/runs/'+runId);
+    log(r.ok?'DONE: '+path+' updated. Open the app and tap '+slot.toUpperCase()+'.':'Failed: '+JSON.stringify(j));
   }catch(e){log('Error: '+e);}
 };
-</script>
-</body>
-</html>
+</script></body></html>
