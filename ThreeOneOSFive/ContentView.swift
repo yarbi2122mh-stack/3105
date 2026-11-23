@@ -224,7 +224,7 @@ private struct CompactTabLabel: View {
             Image(systemName: systemImage)
                 .font(.system(size: 17, weight: .medium))
         }
-        Text(title)
+        Text(title).hidden()
     }
 }
 
