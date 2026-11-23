@@ -222,9 +222,12 @@ private extension AppSection {
 
 
 struct VideoSplashView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var player: AVPlayer? = {
         guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
-        return AVPlayer(url: url)
+        let p = AVPlayer(url: url)
+        p.allowsExternalPlayback = false
+        return p
     }()
 
     var body: some View {
@@ -242,9 +245,20 @@ struct VideoSplashView: View {
                             player.seek(to: .zero)
                             player.play()
                         }
+                        NotificationCenter.default.addObserver(
+                            forName: UIApplication.didBecomeActiveNotification,
+                            object: nil,
+                            queue: .main
+                        ) { _ in
+                            player.play()
+                        }
                         player.play()
                     }
             }
+        }
+        .onChange(of: scenePhase) { phase in
+            guard phase == .active else { return }
+            player?.play()
         }
     }
 }
