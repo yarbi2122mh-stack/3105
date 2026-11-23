@@ -290,14 +290,14 @@ struct VideoSplashView: View {
             }
             if showCards {
                 GameLaunchCards {
-                    withAnimation(.easeOut(duration: 0.25)) { showCards = false }
+                    showCards = false
                 }
                 .padding(.horizontal, 24)
             } else {
                 VStack {
                     HStack {
                         Button {
-                            withAnimation(.easeOut(duration: 0.25)) { showCards = true }
+                            showCards = true
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.left")
