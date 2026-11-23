@@ -48,7 +48,7 @@ struct ContentView: View {
         Group {
             if videoMode {
                 VideoSplashView { section in
-                    selectedSection = section
+                    tabNavigation.select(section.rawValue)
                     videoMode = false
                 }
             } else {
@@ -340,6 +340,35 @@ struct VideoSplashView: View {
             guard phase == .active else { return }
             player?.play()
         }
+    }
+}
+
+struct VideoPlayerContainer: UIViewRepresentable {
+    let player: AVPlayer
+
+    func makeUIView(context: Context) -> PlayerUIView {
+        PlayerUIView(player: player)
+    }
+
+    func updateUIView(_ uiView: PlayerUIView, context: Context) {}
+}
+
+final class PlayerUIView: UIView {
+    private let playerLayer: AVPlayerLayer
+
+    init(player: AVPlayer) {
+        self.playerLayer = AVPlayerLayer(player: player)
+        self.playerLayer.videoGravity = .resizeAspectFill
+        super.init(frame: .zero)
+        backgroundColor = .black
+        layer.addSublayer(playerLayer)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        playerLayer.frame = bounds
     }
 }
 
