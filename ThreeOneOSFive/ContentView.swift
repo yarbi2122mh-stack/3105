@@ -256,6 +256,12 @@ struct VideoSplashView: View {
                         player.play()
                     }
             }
+            VStack {
+                Spacer()
+                GameLaunchCards()
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 48)
+            }
         }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
@@ -291,5 +297,40 @@ final class PlayerUIView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         playerLayer.frame = bounds
+    }
+}
+
+
+struct GameLaunchCards: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            GameCard(title: "FREE FIRE MAX", scheme: "com.dts.freefiremax://")
+            GameCard(title: "FREE FIRE NORMAL", scheme: "com.dts.freefire://")
+        }
+    }
+}
+
+struct GameCard: View {
+    let title: String
+    let scheme: String
+
+    var body: some View {
+        Button {
+            guard let url = URL(string: scheme) else { return }
+            UIApplication.shared.open(url, options: [:]) { _ in }
+        } label: {
+            Text(title)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, minHeight: 74)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.green.opacity(0.7), lineWidth: 1.5)
+                )
+                .shadow(color: .green.opacity(0.18), radius: 10, y: 4)
+        }
+        .buttonStyle(.plain)
     }
 }
