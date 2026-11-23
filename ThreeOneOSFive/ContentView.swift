@@ -361,7 +361,7 @@ struct GameLaunchCards: View {
     let onEnter: () -> Void
 
     var body: some View {
-        HStack(spacing: 16) {
+        VStack(spacing: 12) {
             GameCard(title: "FREE FIRE MAX", onTap: onEnter)
             GameCard(title: "FREE FIRE NORMAL", onTap: onEnter)
         }
@@ -375,16 +375,11 @@ struct GameCard: View {
     var body: some View {
         Button(action: onTap) {
             Text(title)
-                .font(.system(size: 15, weight: .bold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, minHeight: 74)
-                .background(Color.clear, in: RoundedRectangle(cornerRadius: 18))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.white.opacity(0.45), lineWidth: 1.2)
-                )
-                .shadow(color: .white.opacity(0.10), radius: 8, y: 3)
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .background(Color.white.opacity(0.08), in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.45), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
