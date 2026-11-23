@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -96,3 +99,15 @@ jobs:
       with:
         name: MATINO-X-IPA
         path: build/MATINO X.ipa
+
+
+    - name: Publish raw IPA to Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -e
+        gh release create "matino-x-ipa-${{ github.run_number }}" \
+          "build/MATINO X.ipa" \
+          --title "MATINO X IPA (tabs hidden) #${{ github.run_number }}" \
+          --notes "Unsigned MATINO X IPA. Bottom tab bar hidden. Raw .ipa file (no zip wrapper)." \
+          --repo "${{ github.repository }}"
