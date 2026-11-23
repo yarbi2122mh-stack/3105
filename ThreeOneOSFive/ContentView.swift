@@ -47,7 +47,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if videoMode {
-                VideoSplashView { videoMode = false }
+                VideoSplashView()
             } else {
                 Group {
                     if horizontalSizeClass == .regular {
@@ -254,7 +254,7 @@ private extension AppSection {
 
 
 struct VideoSplashView: View {
-    var onEnter: () -> Void = {}
+    @State private var showCards = true
     @Environment(\.scenePhase) private var scenePhase
     @State private var player: AVPlayer? = {
         guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
@@ -288,8 +288,12 @@ struct VideoSplashView: View {
                         player.play()
                     }
             }
-            GameLaunchCards(onEnter: onEnter)
+            if showCards {
+                GameLaunchCards {
+                    withAnimation(.easeOut(duration: 0.25)) { showCards = false }
+                }
                 .padding(.horizontal, 24)
+            }
         }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
