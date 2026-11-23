@@ -299,9 +299,9 @@ struct VideoSplashView: View {
                 .padding(.horizontal, 24)
             } else if showCategories {
                 VStack(spacing: 12) {
-                    GameCard(title: "AIM") onEnterApp
-                    GameCard(title: "HOLOGRAM") onEnterApp
-                    GameCard(title: "SKIN") onEnterApp
+                    GameCard(title: "AIM", onTap: onEnterApp)
+                    GameCard(title: "HOLOGRAM", onTap: onEnterApp)
+                    GameCard(title: "SKIN", onTap: onEnterApp)
                 }
                 .padding(.horizontal, 24)
             }
