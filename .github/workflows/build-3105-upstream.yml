@@ -1,0 +1,59 @@
+name: Build 3105 (YangJiiii upstream)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout upstream YangJiiii/3105
+        uses: actions/checkout@v4
+        with:
+          repository: YangJiiii/3105
+          ref: main
+          path: src
+          fetch-depth: 1
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build unsigned 3105
+        working-directory: src
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project ThreeOneOSFive.xcodeproj \
+            -target 3105 \
+            -configuration Release \
+            -sdk iphoneos \
+            SYMROOT="$PWD/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
+          APP="$PWD/build/Release-iphoneos/3105.app"
+          test -d "$APP"
+          test -f "$APP/Info.plist"
+          rm -rf "$PWD/Payload"
+          mkdir -p "$PWD/Payload"
+          cp -R "$APP" "$PWD/Payload/"
+          zip -9qry 3105-unsigned.ipa Payload
+          ls -lh 3105-unsigned.ipa
+
+      - name: Publish IPA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release create "3105-upstream-${{ github.run_number }}" \
+            "src/3105-unsigned.ipa" \
+            --title "3105 (YangJiiii) unsigned #${{ github.run_number }}" \
+            --notes "Built from YangJiiii/3105@main via xcodebuild, unsigned." \
+            --repo "${{ github.repository }}"
