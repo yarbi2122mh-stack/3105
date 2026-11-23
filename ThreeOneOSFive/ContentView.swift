@@ -294,7 +294,8 @@ struct VideoSplashView: View {
 
             if let slot = playingSlot {
                 RemoteVideoView(
-                    url: URL(string: "https://raw.githubusercontent.com/yarbi2122mh-stack/3105/main/assets/" + selectedGame + "/" + slot + ".mp4")!,
+                    game: selectedGame,
+                    slot: slot,
                     onBack: { playingSlot = nil }
                 )
                 .ignoresSafeArea()
@@ -407,9 +408,16 @@ struct GameCard: View {
 
 
 struct RemoteVideoView: View {
-    let url: URL
+    let game: String
+    let slot: String
     let onBack: () -> Void
+    @EnvironmentObject private var patchDraftCoordinator: PatchDraftCoordinator
     @State private var player: AVPlayer?
+    @State private var status = "Loading..."
+
+    private var baseURL: String {
+        "https://raw.githubusercontent.com/yarbi2122mh-stack/3105/main/assets/" + game + "/" + slot
+    }
 
     var body: some View {
         ZStack {
@@ -417,6 +425,10 @@ struct RemoteVideoView: View {
             if let player {
                 VideoPlayerContainer(player: player)
                     .ignoresSafeArea()
+            } else {
+                Text(status)
+                    .foregroundColor(.white)
+                    .font(.caption)
             }
             VStack {
                 HStack {
@@ -440,19 +452,47 @@ struct RemoteVideoView: View {
                 Spacer()
             }
         }
-        .onAppear {
-            let p = AVPlayer(url: url)
-            p.allowsExternalPlayback = false
-            player = p
-            NotificationCenter.default.addObserver(
-                forName: .AVPlayerItemDidPlayToEndTime,
-                object: p.currentItem,
-                queue: .main
-            ) { _ in
-                p.seek(to: .zero)
-                p.play()
-            }
-            p.play()
-        }
+        .onAppear { load() }
+    }
+
+    private func load() {
+        let typeURL = URL(string: baseURL + ".type")!
+        URLSession.shared.dataTask(with: typeURL) { typeData, _, _ in
+            let ext = (typeData.flatMap { String(data: $0, encoding: .utf8) } ?? "mp4")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let fileURL = URL(string: baseURL + "." + ext)!
+            URLSession.shared.dataTask(with: fileURL) { data, _, error in
+                guard let data, error == nil else {
+                    DispatchQueue.main.async { status = "No file for " + slot.uppercased() }
+                    return
+                }
+                let head = String(data: data.prefix(9), encoding: .utf8) ?? ""
+                if head.hasPrefix("3105PATCH") {
+                    let name = slot + "." + ext
+                    let dest = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                        .appendingPathComponent(name)
+                    try? data.write(to: dest)
+                    DispatchQueue.main.async {
+                        status = "Patch loaded"
+                        patchDraftCoordinator.presentImport(dest)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        let p = AVPlayer(url: fileURL)
+                        p.allowsExternalPlayback = false
+                        player = p
+                        NotificationCenter.default.addObserver(
+                            forName: .AVPlayerItemDidPlayToEndTime,
+                            object: p.currentItem,
+                            queue: .main
+                        ) { _ in
+                            p.seek(to: .zero)
+                            p.play()
+                        }
+                        p.play()
+                    }
+                }
+            }.resume()
+        }.resume()
     }
 }
