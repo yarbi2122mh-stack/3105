@@ -43,8 +43,9 @@ $('go').onclick=async()=>{
   const f=$('file').files[0];
   if(!f){log('Pick a file first.');return;}
   try{
-    const path='assets/'+game+'/'+slot+'.mp4';
-    log('Uploading to '+path+'...');
+    const ext=(f.name.split('.').pop()||'mp4').toLowerCase();
+    const path='assets/'+game+'/'+slot+'.'+ext;
+    log('Uploading to '+path+' ('+f.name+')...');
     const content=await b64(f);
     const h={Authorization:'Bearer '+TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json'};
     let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{headers:h});
@@ -53,7 +54,15 @@ $('go').onclick=async()=>{
     if(j.sha)body.sha=j.sha;
     r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method:'PUT',headers:h,body:JSON.stringify(body)});
     j=await r.json();
-    log(r.ok?'DONE: '+path+' updated.':'Failed: '+JSON.stringify(j));
+    if(!r.ok){log('Failed: '+JSON.stringify(j));return;}
+    // write metadata so the app knows the real extension
+    const metaPath='assets/'+game+'/'+slot+'.type';
+    let mr=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+metaPath,{headers:h});
+    let mj=await mr.json();
+    const mbody={message:'Set '+slot+' type',content:btoa(ext),branch:'main'};
+    if(mj.sha)mbody.sha=mj.sha;
+    await fetch('https://api.github.com/repos/'+REPO+'/contents/'+metaPath,{method:'PUT',headers:h,body:JSON.stringify(mbody)});
+    log('DONE: '+path+' updated.');
   }catch(e){log('Error: '+e);}
 };
 </script></body></html>
