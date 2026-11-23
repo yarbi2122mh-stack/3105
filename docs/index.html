@@ -3,20 +3,25 @@
 <title>IPA Slot Uploader</title>
 <style>
 body{background:#000;color:#fff;font-family:system-ui;padding:24px;max-width:520px;margin:auto}
-h1{font-size:20px}small{color:#888;display:block;margin-bottom:18px}
-.slots{display:flex;gap:10px;margin:14px 0}
-.slots button{flex:1;background:#111;color:#fff;border:1px solid #333;border-radius:12px;padding:16px 6px;font-weight:800;cursor:pointer}
-.slots button.on{background:#fff;color:#000;border-color:#fff}
-input[type=file]{background:#111;color:#fff;border:1px solid #333;width:100%;margin:8px 0;padding:12px;border-radius:10px;box-sizing:border-box}
-#go{width:100%;background:#fff;color:#000;border:0;cursor:pointer;font-weight:800;padding:14px;border-radius:10px;margin-top:10px}
+h1{font-size:20px}h2{font-size:14px;color:#888;margin:18px 0 6px}
+.opts{display:flex;gap:10px}
+.opts button{flex:1;background:#111;color:#fff;border:1px solid #333;border-radius:12px;padding:14px 6px;font-weight:800;cursor:pointer}
+.opts button.on{background:#fff;color:#000;border-color:#fff}
+input[type=file]{background:#111;color:#fff;border:1px solid #333;width:100%;margin:16px 0;padding:12px;border-radius:10px;box-sizing:border-box}
+#go{width:100%;background:#fff;color:#000;border:0;cursor:pointer;font-weight:800;padding:14px;border-radius:10px}
 pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;border-radius:10px;color:#0f0;margin-top:16px}
 </style></head><body>
 <h1>IPA Slot Uploader</h1>
-<small>Choose a slot, pick a file, tap Upload. No typing.</small>
-<div class="slots">
-<button data-s="aim" class="on">AIM</button>
-<button data-s="hologram">HOLOGRAM</button>
-<button data-s="skin">SKIN</button>
+<h2>Game</h2>
+<div class="opts" id="games">
+<button data-v="ffmax" class="on">FF MAX</button>
+<button data-v="ffth">FF TH</button>
+</div>
+<h2>Slot</h2>
+<div class="opts" id="slots">
+<button data-v="aim" class="on">AIM</button>
+<button data-v="hologram">HOLOGRAM</button>
+<button data-v="skin">SKIN</button>
 </div>
 <input id="file" type="file">
 <button id="go">Upload</button>
@@ -24,29 +29,31 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0d0d0d;padding:12px;bo
 <script>
 const REPO='yarbi2122mh-stack/3105';
 const TOKEN=atob('Z2hwX2NpUGoyajlaOGp6MHpVS2x3'+''+'MGJiMVhOcVNIcUxtSDA2c1pFaA==');
-let slot='aim';
+let game='ffmax', slot='aim';
 const $=id=>document.getElementById(id);
 function log(s){$('log').textContent+=s+'\n';}
-document.querySelectorAll('.slots button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.slots button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); slot=b.dataset.s; log('Slot: '+slot.toUpperCase());
-});
+function bind(id,key){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); if(key==='game')game=b.dataset.v; else slot=b.dataset.v;
+  log(key.toUpperCase()+': '+b.textContent);
+});}
+bind('games','game'); bind('slots','slot');
 function b64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 $('go').onclick=async()=>{
   const f=$('file').files[0];
   if(!f){log('Pick a file first.');return;}
   try{
-    const path='assets/'+slot+'.mp4';
+    const path='assets/'+game+'/'+slot+'.mp4';
     log('Uploading to '+path+'...');
     const content=await b64(f);
     const h={Authorization:'Bearer '+TOKEN,Accept:'application/vnd.github+json','Content-Type':'application/json'};
     let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{headers:h});
     let j=await r.json();
-    const body={message:'Update '+slot+' video',content,branch:'main'};
+    const body={message:'Update '+game+'/'+slot+' video',content,branch:'main'};
     if(j.sha)body.sha=j.sha;
     r=await fetch('https://api.github.com/repos/'+REPO+'/contents/'+path,{method:'PUT',headers:h,body:JSON.stringify(body)});
     j=await r.json();
-    log(r.ok?'DONE: '+path+' updated. Tap '+slot.toUpperCase()+' in the app.':'Failed: '+JSON.stringify(j));
+    log(r.ok?'DONE: '+path+' updated.':'Failed: '+JSON.stringify(j));
   }catch(e){log('Error: '+e);}
 };
 </script></body></html>
