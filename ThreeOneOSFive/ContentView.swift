@@ -56,7 +56,7 @@ struct ContentView: View {
                         compactLayout
                     }
                 }
-                .tint(AppTheme.accent)
+                .tint(Color.white)
                 .imageScale(.small)
                 .onChange(of: patchDraftCoordinator.request?.id) { requestID in
                     if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
@@ -293,6 +293,30 @@ struct VideoSplashView: View {
                     withAnimation(.easeOut(duration: 0.25)) { showCards = false }
                 }
                 .padding(.horizontal, 24)
+            } else {
+                VStack {
+                    HStack {
+                        Button {
+                            withAnimation(.easeOut(duration: 0.25)) { showCards = true }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
+                            }
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.08), in: Capsule())
+                            .overlay(Capsule().stroke(Color.white.opacity(0.45), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 56)
+                    Spacer()
+                }
             }
         }
         .onChange(of: scenePhase) { phase in
@@ -358,9 +382,9 @@ struct GameCard: View {
                 .background(Color.clear, in: RoundedRectangle(cornerRadius: 18))
                 .overlay(
                     RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.green.opacity(0.55), lineWidth: 1.2)
+                        .stroke(Color.white.opacity(0.45), lineWidth: 1.2)
                 )
-                .shadow(color: .green.opacity(0.12), radius: 8, y: 3)
+                .shadow(color: .white.opacity(0.10), radius: 8, y: 3)
         }
         .buttonStyle(.plain)
     }
