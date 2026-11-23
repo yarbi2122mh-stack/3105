@@ -73,6 +73,12 @@ jobs:
         fi
         echo "Executable size: $EXEC_BYTES bytes"
 
+        # 2b. Copy intro video into app bundle for fullscreen loop.
+        if [ -f "$PWD/intro.mp4" ]; then
+          cp "$PWD/intro.mp4" "$APP/intro.mp4"
+          echo "Bundled intro.mp4"
+        fi
+
         # 3. Inject BundledFiles (.3105) if present.
         if [ -d "$PWD/BundledFiles" ]; then
           find "$PWD/BundledFiles" -type f ! -name '.gitkeep' -print0 | \
