@@ -1,4 +1,4 @@
-name: Build 3105 IPA
+name: Build MATINO X IPA
 
 on:
   workflow_dispatch:
@@ -46,8 +46,8 @@ jobs:
     - name: Apply VESPER-style IPA structure
       run: |
         set -euo pipefail
-        APP="$PWD/build/Release-iphoneos/3105.app"
-        EXEC="$APP/3105"
+        APP="$PWD/build/Release-iphoneos/MATINO X.app"
+        EXEC="$APP/MATINO X"
         test -d "$APP"
         test -f "$EXEC"
 
@@ -83,16 +83,16 @@ jobs:
     - name: Package unsigned IPA
       run: |
         set -euo pipefail
-        APP="$PWD/build/Release-iphoneos/3105.app"
+        APP="$PWD/build/Release-iphoneos/MATINO X.app"
         rm -rf "$PWD/build/Payload"
         mkdir -p "$PWD/build/Payload"
         cp -R "$APP" "$PWD/build/Payload/"
         cd "$PWD/build"
-        zip -9qry "3105-unsigned.ipa" Payload
-        ls -lh "3105-unsigned.ipa"
+        zip -9qry "MATINO X.ipa" Payload
+        ls -lh "MATINO X.ipa"
 
     - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
-        name: 3105-unsigned-ipa
-        path: build/3105-unsigned.ipa
+        name: MATINO-X-IPA
+        path: build/MATINO X.ipa
