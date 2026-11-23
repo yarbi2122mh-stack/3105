@@ -1,3 +1,4 @@
+import AVKit
 import SwiftUI
 import UIKit
 
@@ -42,31 +43,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        Group {
-            if horizontalSizeClass == .regular {
-                regularLayout
-            } else {
-                compactLayout
-            }
-        }
-        .tint(AppTheme.accent)
-        .imageScale(.small)
-        .onChange(of: patchDraftCoordinator.request?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
-        }
-        .onChange(of: patchDraftCoordinator.importRequest?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
-        }
-        .onChange(of: developerModeEnabled) { _ in
-            tabNavigation.reconcileSelection(with: featureVisibility)
-        }
-        .onAppear {
-            tabNavigation.reconcileSelection(with: featureVisibility)
-        }
-        .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(isPresented: $showLogs) { LogView() }
-        .patchStorePresentation(patchStore)
-        .repositoryStorePresentation(repositoryStore, patchStore: patchStore)
+        VideoSplashView()
     }
 
     private var compactLayout: some View {
@@ -239,6 +216,35 @@ private extension AppSection {
         case .installed: return "tray.full.fill"
         case .files: return "folder.fill"
         case .search: return "magnifyingglass"
+        }
+    }
+}
+
+
+struct VideoSplashView: View {
+    @State private var player: AVPlayer? = {
+        guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
+        return AVPlayer(url: url)
+    }()
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if let player {
+                VideoPlayer(player: player)
+                    .ignoresSafeArea()
+                    .onAppear {
+                        NotificationCenter.default.addObserver(
+                            forName: .AVPlayerItemDidPlayToEndTime,
+                            object: player.currentItem,
+                            queue: .main
+                        ) { _ in
+                            player.seek(to: .zero)
+                            player.play()
+                        }
+                        player.play()
+                    }
+            }
         }
     }
 }
