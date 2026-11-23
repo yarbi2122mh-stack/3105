@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -22,6 +23,13 @@ struct PatchProjectsView: View {
     @State private var showImporter = false
     @State private var showWallpaperImporter = false
     @State private var showCleaner = false
+    @State private var bgPlayer: AVPlayer? = {
+        guard let url = Bundle.main.url(forResource: "intro", withExtension: "mp4") else { return nil }
+        let p = AVPlayer(url: url)
+        p.allowsExternalPlayback = false
+        p.isMuted = true
+        return p
+    }()
     @State private var searchText = ""
     @State private var wallpaperPackages: [WallpaperStagedPackage] = []
     @State private var wallpaperImportFeedback: WallpaperImportFeedback?
@@ -141,6 +149,24 @@ struct PatchProjectsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .background {
+                    if let bgPlayer {
+                        VideoPlayerContainer(player: bgPlayer)
+                            .ignoresSafeArea()
+                            .onAppear {
+                                NotificationCenter.default.addObserver(
+                                    forName: .AVPlayerItemDidPlayToEndTime,
+                                    object: bgPlayer.currentItem,
+                                    queue: .main
+                                ) { _ in
+                                    bgPlayer.seek(to: .zero)
+                                    bgPlayer.play()
+                                }
+                                bgPlayer.play()
+                            }
+                    }
+                }
             }
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showImporter) {
